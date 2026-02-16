@@ -27,7 +27,7 @@ export const useAuthStore = defineStore('auth', {
           token_endpoint: import.meta.env.VITE_COGNITO_DOMAIN + '/oauth2/token',
           userinfo_endpoint: import.meta.env.VITE_COGNITO_DOMAIN + '/oauth2/userInfo',
           jwks_uri:
-            'https://cognito-idp.us-east-1.amazonaws.com/us-east-1_JPMU56Ifb/.well-known/jwks.json',
+            'https://cognito-idp.us-east-1.amazonaws.com/us-east-1_ps8WTEKRN/.well-known/jwks.json',
         },
       })
 
@@ -47,6 +47,7 @@ export const useAuthStore = defineStore('auth', {
     },
 
     login() {
+      console.
       if (!this.userManager) return
       return this.userManager.signinRedirect()
     },

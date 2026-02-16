@@ -13,10 +13,11 @@
     "lint:oxlint": "oxlint . --fix",
     "lint:eslint": "eslint . --fix --cache",
     "format": "prettier --write --experimental-cli src/",
-    "generate-api": "openapi-typescript-codegen --input http://127.0.0.1:8000/openapi.json --output ./src/api/generated --client fetch"
+    "generate-api": "openapi-typescript-codegen --input http://localhost:8000/openapi.json --output ./src/api/generated --client fetch"
   },
   "dependencies": {
     "@primevue/themes": "^4.5.4",
+    "oidc-client-ts": "^3.4.1",
     "pinia": "^3.0.4",
     "primeicons": "^7.0.0",
     "primevue": "^4.5.4",
