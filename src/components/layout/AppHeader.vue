@@ -30,6 +30,11 @@ const items = ref([
         icon: 'pi pi-info-circle',
         command: () => router.push('/test'),
     },
+    {
+        label: 'Create Incident',
+        icon: 'pi pi-plus',
+        command: () => router.push('/create-incident'),
+    },
 ])
 </script>
 

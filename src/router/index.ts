@@ -15,9 +15,14 @@ const router = createRouter({
       component: () => import('../pages/IncidentsPage.vue'),
     },
     {
-      path: '/test',
-      name: 'test',
-      component: () => import('../pages/TestPage.vue'),
+      path: '/create-incident',
+      name: 'incidentcreate',
+      component: () => import('../pages/CreateIncidentPage.vue'),
+    },
+    {
+      path: '/incident/:id',
+      name: 'incident',
+      component: () => import('../pages/IncidentViewPage.vue'),
     },
     {
       path: '/:pathMatch(.*)*',
