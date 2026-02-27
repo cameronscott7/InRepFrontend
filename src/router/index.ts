@@ -15,6 +15,11 @@ const router = createRouter({
       component: () => import('../pages/TestPage.vue'),
     },
     {
+      path: '/create-api-key',
+      name: 'create-api-key',
+      component: () => import('../pages/APIKeyCreationPage.vue'),
+    },
+    {
       path: '/:pathMatch(.*)*',
       name: 'notfound',
       component: () => import('../pages/Error/NotFound.vue'),
