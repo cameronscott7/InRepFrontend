@@ -2,7 +2,7 @@
     <h1>
         API Key Creation Simulator
     </h1>
-    <form @submit.prevent="fetchTest">
+    <form @submit.prevent="serviceFetch">
         <div>Selected: {{ selected }}</div>
 
         <select v-model="selected">
@@ -17,30 +17,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
+import { ServiceService } from '@/api/generated'
 
 const selected = ref('')
 
-async function fetchTest() {
-    if (!selected.value) return
-
-    try {
-        // Simulate API call to create an API key
-        console.log('Creating API key for selection:', selected.value)
-        // Here you would typically call your API to create the API key
-        // For example: await ApiKeyService.createApiKey({ selection: selected.value })
-        alert(`API Key for "${selected.value}" created successfully!`)
-        selected.value = '' // Clear the selection after creation
-    } catch (error) {
-        console.error('Error creating API key:', error)
-        alert('Failed to create API key. Please try again.')
-    }
-}
+onMounted(() => {
+    console.log('AboutView mounted')
+    serviceFetch()
+})
 
 async function serviceFetch() {
     // Gets the list of sercives from the backend to populate the dropdown menu
-    
+    // if (!selected.value) return
+    try {
+        const response = await ServiceService.getApiV1Service()
+        console.log('Services fetched successfully:', response)
+    } catch (error) {
+        console.error('Error fetching services:', error)
+        alert('Failed to fetch services. Please try again.')
+    }
 }
 </script>
