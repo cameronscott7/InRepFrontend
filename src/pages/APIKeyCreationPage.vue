@@ -14,7 +14,9 @@
             <Button @click="createAPIKey" type="submit" label="Create API Key" class="p-mt-2" />
         </form>
     </div>
-    <div v-else-if="state.error">{{ state.error }}</div>
+    <div v-else-if="state.error">{{ state.error }}
+        <br><br>
+    </div>
     <div v-else v-if="!state.key">
         <p>Loading...</p>
     </div>
@@ -84,9 +86,11 @@ async function serviceFetch() {
             }
         }
         if (validServices.length === 0) {
-            state.error = 'All Services already have API keys. Please delete an existing API key before creating a new one.'
-            state.key = undefined
-            alert(state.error)
+            if (!state.key) {
+                state.error = 'All Services already have API keys. Please delete an existing API key before creating a new one.'
+            } else {
+                state.error = 'Keys have been generated for all Services. You must delete an existing API key before creating any new ones.'
+            }
             return
         } else {
             services.value = validServices
