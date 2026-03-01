@@ -36,6 +36,11 @@ const items = ref([
         icon: 'pi pi-info-circle',
         command: () => router.push('/test'),
     },
+    {
+        label: 'Create API Key',
+        icon: 'pi pi-key',
+        command: () => router.push('/create-api-key'),
+    }
 ])
 </script>
 
