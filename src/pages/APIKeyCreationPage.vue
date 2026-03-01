@@ -2,7 +2,7 @@
     <h1>
         API Key Creation Simulator
     </h1>
-    <div v-if="!state.loading && !state.key">
+    <div v-if="!state.loading && !state.key && !state.error">
         <form @submit.prevent="serviceFetch">
             <div>Select a service for for the API key: </div>
 
@@ -19,9 +19,9 @@
         <p>Loading...</p>
     </div>
     <div v-if="state.key">
-        <button class="key-block" @click="toggle">{{ revealed ? 'Hide' : 'Reveal' }}</button>
+        Please copy and store your API key securely. It will not be shown again after this page is reloaded or navigated away from.
         <pre>{{ revealed ? state.key : '**************************************************' }}<button v-if="revealed" @click="copyKey" class="copy-button">Copy</button></pre>
-        <br>Reloading or loading a new page will hide the API key, it won't be shown again.
+        <button class="key-block" @click="toggle">{{ revealed ? 'Hide Key' : 'Reveal Key' }}</button>
     </div>
 </template>
 
@@ -83,7 +83,15 @@ async function serviceFetch() {
                 validServices.push(service)
             }
         }
-        services.value = validServices
+        if (validServices.length === 0) {
+            state.error = 'All Services already have API keys. Please delete an existing API key before creating a new one.'
+            state.key = undefined
+            alert(state.error)
+            return
+        } else {
+            services.value = validServices
+        }
+        
     } catch (error: any) {
         console.error('Error fetching services:', error)
         state.error = error?.message || 'An error occurred while fetching services.'
