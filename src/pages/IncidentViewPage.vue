@@ -1,21 +1,20 @@
 <template>
-    <h1>Incident : {{ incident?.name }}</h1>
+    <h1>Incident : {{ incident?.summary }}</h1>
     <p v-if="incident?.status === 'open'">
-        <i class="pi pi-minus-circle red"></i> Reported at {{ formatTimestamp(incident.created_at) }} by {{ incident.author }}
+        <i class="pi pi-minus-circle red"></i> Reported at {{ formatDate(incident.created_at) }}
     </p>
     <p v-else-if="incident?.status === 'closed'">
-        <i class="pi pi-check-circle green"></i> Resolved at {{ formatTimestamp(incident.resolved_at!) }}, Reported at {{ formatTimestamp(incident.created_at) }} by {{ incident.author }} 
+        <i class="pi pi-check-circle green"></i> Resolved at {{ formatDate(incident.resolved_at!) }}, Reported at {{ formatDate(incident.created_at) }}
     </p>
     <p :class="severityClass(incident?.severity || '')">Severity: {{ incident?.severity }}</p>
 
-    <p>{{ incident?.description }}</p>
 </template>
 
 <script setup lang="ts">
 import Card from 'primevue/card'
 import { onMounted, ref, reactive } from 'vue'
 import { useRoute } from 'vue-router'
-import { IncidentService } from '@/api/generated'
+import { IncidentService } from '@/api'
 import { definePreset } from '@primevue/themes'
 import 'primeicons/primeicons.css'
 
@@ -34,12 +33,10 @@ interface IncidentsResponse {
     incidents: Incident[]
 }
 interface Incident {
-    name: string
+    summary: string
     id: number
-    description: string
     status: string
     severity: string
-    author: string
     created_at: number
     resolved_at: number | null
 }
@@ -53,11 +50,11 @@ async function fetchTest() {
 
     try {
         console.log('Fetching incident with ID:', route.params.id)
-        const response = await IncidentService.getApiV1Incidents(route.params.id as unknown as number)
+        const response = await IncidentService.getApiV1Incidents1(route.params.id as unknown as number)
 
         if ('id' in response && response.id === parseInt(route.params.id as string)) {
             console.log('Received incident:', response)
-            incident.value = response as Incident
+            incident.value = response as unknown as Incident
         } else if ('message' in response) {
             state.error = (response as any).message ?? 'There are no incidents'
         }
@@ -68,8 +65,13 @@ async function fetchTest() {
     }
 }
 
-function formatTimestamp(ts: number): string {
-    return new Date(ts * 1000).toLocaleString()
+const formatter = new Intl.DateTimeFormat('en-US', {
+  dateStyle: 'medium',
+  timeStyle: 'short'
+});
+
+function formatDate(ts: any) {
+  return formatter.format(new Date(ts));
 }
 
 function severityClass(severity: string) {
