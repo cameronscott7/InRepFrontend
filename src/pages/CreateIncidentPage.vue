@@ -6,7 +6,7 @@
             <InputText id="name" v-model="state.testMessage" required />
         </div>
         <div class="p-field">
-            <label for="name">API Key (optional):</label>
+            <label for="name">API Key:</label>
             <InputText id="name" v-model="state.testApiKey" required />
         </div>
         <div class="p-field">
@@ -33,22 +33,39 @@
 import { reactive } from 'vue'
 import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
+import { IncidentService } from '@/api'
+import { type IncidentCreate } from "@/api/generated/models/IncidentCreate";
 
 const state = reactive({
     testMessage: null as string | null,
     testDescription: null as string | null,
     testSeverity: null as string | null,
-    testApiKey: null as string | null,
+    testApiKey: '' as string,
 })
 async function fetchTest() {
     if (!state.testMessage) return
 
     try {
         // Simulate API call to create an incident
-        console.log('Creating incident with name:', state.testMessage)
+
+        const incidentCreate: IncidentCreate = {
+            summary: state.testMessage,
+            severity: state.testSeverity || 'low',
+        }
+
+        console.log('Attempting to create an incident with name:', state.testMessage)
         console.log('Description:', state.testDescription)
         console.log('Severity:', state.testSeverity)
         console.log('API Key:', state.testApiKey)
+        const response = fetch(import.meta.env.VITE_API_BASE_URL + '/api/v1/incidents', {
+            method: 'POST',
+            headers: {
+                'content-type': 'application/json',
+                'X-API-Key': state.testApiKey,
+            },
+            body: JSON.stringify(incidentCreate),
+        })
+
         // Here you would typically call your API to create the incident
         // For example: await IncidentService.createIncident({ name: state.testMessage })
         alert(`Incident "${state.testMessage}" created successfully!`)
