@@ -30,8 +30,7 @@ export const useAuthStore = defineStore('auth', {
           end_session_endpoint: import.meta.env.VITE_COGNITO_DOMAIN + '/logout',
           token_endpoint: import.meta.env.VITE_COGNITO_DOMAIN + '/oauth2/token',
           userinfo_endpoint: import.meta.env.VITE_COGNITO_DOMAIN + '/oauth2/userInfo',
-          jwks_uri:
-            'https://cognito-idp.us-east-1.amazonaws.com/us-east-1_ps8WTEKRN/.well-known/jwks.json',
+          jwks_uri: `${import.meta.env.VITE_COGNITO_USER_POOL_URL}/.well-known/jwks.json`,
         },
       })
 
@@ -59,7 +58,7 @@ export const useAuthStore = defineStore('auth', {
     async handleCallback() {
       if (!this.userManager) return
       this.user = await this.userManager.signinRedirectCallback()
-      await this.syncUser();
+      await this.syncUser(); //TODO add error handling and loading state for this call
     },
 
     async syncUser() {
@@ -91,7 +90,7 @@ export const useAuthStore = defineStore('auth', {
 
       // clear oidc-client-ts cached user
       await this.userManager.removeUser() // removes user from storage
-      this.userManager.clearStaleState() // cleans any pending state
+      await this.userManager.clearStaleState() // cleans any pending state
 
       // redirect to Cognito logout
       const domain = import.meta.env.VITE_COGNITO_DOMAIN
@@ -100,5 +99,8 @@ export const useAuthStore = defineStore('auth', {
 
       window.location.href = `${domain}/logout?client_id=${clientId}&logout_uri=${logoutUri}`
     },
+  },
+   persist: {
+    pick: ['appUser'],
   },
 })
