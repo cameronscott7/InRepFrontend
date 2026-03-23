@@ -40,6 +40,11 @@ const items = ref([
         label: 'Create API Key',
         icon: 'pi pi-key',
         command: () => router.push('/create-api-key'),
+    },
+    {
+        label: 'User Profile',
+        icon: 'pi pi-user',
+        command: () => router.push('/user-profile-page'),
     }
 ])
 </script>
