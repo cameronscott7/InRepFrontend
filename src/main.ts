@@ -6,9 +6,8 @@ import Aura from '@primeuix/themes/aura'
 import { definePreset } from '@primeuix/themes'
 import App from './App.vue'
 import router from './router'
-import { OpenAPI } from '@/api/generated'
-
-OpenAPI.BASE = import.meta.env.VITE_API_BASE_URL
+import { useAuthStore } from './stores/auth'
+import { ToastService } from 'primevue'
 
 const app = createApp(App)
 
@@ -38,5 +37,9 @@ app.use(PrimeVue, {
 
 app.use(createPinia())
 app.use(router)
+app.use(ToastService)
+
+const authStore = useAuthStore()
+authStore.init()
 
 app.mount('#app')
