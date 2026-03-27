@@ -67,7 +67,7 @@ const userMenuItems = computed(() => [
     {
         label: auth.userName ?? 'Account',
         items: [
-            { label: 'My Profile', icon: 'pi pi-user', command: () => router.push('/user-profile-page') },
+            { label: 'My Profile', icon: 'pi pi-user', command: () => router.push('/profile') },
             { separator: true },
             { label: 'Log out', icon: 'pi pi-sign-out', command: () => auth.logout() },
         ],

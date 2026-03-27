@@ -32,8 +32,8 @@ const router = createRouter({
       component: () => import('../pages/APIKeyCreationPage.vue'),
     },
     {
-      path: '/user-profile-page',
-      name: 'user-profile-page',
+      path: '/profile',
+      name: 'profile',
       component: () => import('../pages/UserProfilePage.vue'),
     },
     {
