@@ -1,84 +1,59 @@
 <template>
-<Card style="max-width:600px; margin:auto">
-<template #title>
-API Key Creation Simulator
-</template>
+    <Card style="max-width:600px; margin:auto">
+        <template #title>
+            API Key Creation Simulator
+        </template>
 
-<template #content>
+        <template #content>
 
-<div v-if="!state.loading && !state.key && !state.error">
+            <div v-if="!state.loading && !state.key && !state.error">
 
-<form @submit.prevent="createAPIKey">
+                <form @submit.prevent="createAPIKey">
 
-<div class="field">
-<label>Select a service: </label>
+                    <div class="field">
+                        <label>Select a service: </label>
 
-<Select
-    v-model="selected"
-    :options="services"
-    optionLabel="name"
-    optionValue="id"
-    placeholder="Select a service"
-/>
-</div>
+                        <Select v-model="selected" :options="services" optionLabel="name" optionValue="id"
+                            placeholder="Select a service" />
+                    </div>
 
-<Button v-if="selected"
-    type="submit"
-    label="Create API Key"
-    icon="pi pi-key"
-    class="p-mt-3"
-/>
+                    <Button v-if="selected" type="submit" label="Create API Key" icon="pi pi-key" class="p-mt-3" />
 
-</form>
+                </form>
 
-</div>
+            </div>
 
-<Message v-else-if="state.error" severity="error">
-{{ state.error }}
-</Message>
+            <Message v-else-if="state.error" severity="error">
+                {{ state.error }}
+            </Message>
 
-<div v-else-if="state.loading">
-<ProgressSpinner />
-</div>
+            <div v-else-if="state.loading">
+                <ProgressSpinner />
+            </div>
 
-<div v-if="state.key" class="key-section">
+            <div v-if="state.key" class="key-section">
 
-<p>
-Please copy and store your API key securely. It will not be shown again
-after leaving this page.
-</p>
+                <p>
+                    Please copy and store your API key securely. It will not be shown again
+                    after leaving this page.
+                </p>
 
-<InputGroup>
+                <InputGroup>
 
-<Password
-    :modelValue="state.key"
-    :feedback="false"
-    toggleMask
-    readonly
-    :inputProps="{ readonly: true }"
-    class="w-full"
-/>
+                    <Password :modelValue="state.key" :feedback="false" toggleMask readonly
+                        :inputProps="{ readonly: true }" class="w-full" />
 
-<Button
-    icon="pi pi-copy"
-    label="Copy"
-    @click="copyKey"
-/>
+                    <Button icon="pi pi-copy" label="Copy" @click="copyKey" />
 
-</InputGroup>
-<div class="p-mt-3">
+                </InputGroup>
+                <div class="p-mt-3">
 
-<Button
-    label="Create Another Key"
-    icon="pi pi-refresh"
-    severity="secondary"
-    @click="refreshPage"
-/>
-</div>
-</div>
+                    <Button label="Create Another Key" icon="pi pi-refresh" severity="secondary" @click="refreshPage" />
+                </div>
+            </div>
 
-</template>
-</Card>
+        </template>
+    </Card>
 </template>
 
 <script setup lang="ts">
@@ -143,9 +118,9 @@ async function serviceFetch() {
             console.log('Service is valid for API key creation:', service)
             validServices.push(service)
         }
-        
+
         services.value = validServices
-        
+
     } catch (error: any) {
         console.error('Error fetching services:', error)
         state.error = error?.message || 'An error occurred while fetching services.'
@@ -181,19 +156,21 @@ async function createAPIKey() {
 }
 </script>
 
-<style scoped>  
+<style scoped>
 .key-block {
     user-select: text;
     background: #111;
     padding: 8px;
     border-radius: 4px;
 }
+
 .copy-button {
     margin-left: 10px;
     padding: 4px 8px;
     font-size: 0.9em;
     cursor: pointer;
 }
+
 .field {
     margin-bottom: 1.5rem;
 }
