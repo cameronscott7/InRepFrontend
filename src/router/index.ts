@@ -44,16 +44,6 @@ const router = createRouter({
       component: () => import('../pages/CallbackPage.vue'),
     },
     {
-      path: '/create-api-key',
-      name: 'create-api-key',
-      component: () => import('../pages/APIKeyCreationPage.vue'),
-      meta: {
-        requiresAuth: true,
-        roles: [Roles.ADMINISTRATOR],
-      },
-      
-    },
-    {
       path: '/:pathMatch(.*)*',
       name: 'notfound',
       component: () => import('../pages/Error/NotFound.vue'),
