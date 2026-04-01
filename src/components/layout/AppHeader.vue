@@ -37,6 +37,11 @@ const items = ref([
         command: () => router.push('/test'),
     },
     {
+        label: 'Teams',
+        icon: 'pi pi-users',
+        command: () => router.push('/teams'),
+    },
+    {
         label: 'Create API Key',
         icon: 'pi pi-key',
         command: () => router.push('/create-api-key'),
