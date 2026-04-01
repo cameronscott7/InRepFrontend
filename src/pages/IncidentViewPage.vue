@@ -1,77 +1,313 @@
 <template>
-    <h1>Incident : {{ incident?.summary }}</h1>
-    <p v-if="incident?.status === 'open'">
-        <i class="pi pi-minus-circle red"></i> Reported at {{ formatDate(incident.created_at) }}
-    </p>
-    <p v-else-if="incident?.status === 'closed'">
-        <i class="pi pi-check-circle green"></i> Resolved at {{ formatDate(incident.resolved_at!) }}, Reported at {{ formatDate(incident.created_at) }}
-    </p>
-    <p :class="severityClass(incident?.severity || '')">Severity: {{ incident?.severity }}</p>
+    <div class="container">
+        <div v-if="state.loading" class="loading">
+            <ProgressSpinner />
+        </div>
 
+        <Message v-else-if="state.error" severity="error">
+            {{ state.error }}
+        </Message>
+
+        <div v-else-if="incident" class="incident-details">
+            <div class="header-row">
+                <div>
+                    <h1>{{ incident.summary }}</h1>
+                    <p class="subtitle">Incident Details</p>
+                </div>
+
+                <Button
+                    label="Back"
+                    icon="pi pi-arrow-left"
+                    severity="secondary"
+                    @click="goBack"
+                />
+            </div>
+
+            <!-- OVERVIEW -->
+            <Card class="details-card">
+                <template #title>
+                    Overview
+                </template>
+
+                <template #content>
+                    <div class="detail-row">
+                        <span class="detail-label">Incident ID</span>
+                        <span class="detail-value">#{{ incident.id }}</span>
+                    </div>
+
+                    <div class="detail-row">
+                        <span class="detail-label">Summary</span>
+                        <span class="detail-value">{{ incident.summary }}</span>
+                    </div>
+
+                    <div class="detail-row">
+                        <span class="detail-label">Severity</span>
+                        <span class="detail-value">
+                            <span class="severity-pill" :class="severityClass(incident.severity)">
+                                {{ incident.severity }}
+                            </span>
+                        </span>
+                    </div>
+
+                    <div class="detail-row">
+                        <span class="detail-label">Status</span>
+                        <span class="detail-value">
+                            <span class="status-pill" :class="statusClass(incident.status)">
+                                {{ incident.status }}
+                            </span>
+                        </span>
+                    </div>
+
+                    <div class="detail-row">
+                        <span class="detail-label">Created</span>
+                        <span class="detail-value">{{ formatDate(incident.created_at) }}</span>
+                    </div>
+
+                    <div class="detail-row" v-if="incident.acknowledged_at">
+                        <span class="detail-label">Acknowledged</span>
+                        <span class="detail-value">{{ formatDate(incident.acknowledged_at) }}</span>
+                    </div>
+
+                    <div class="detail-row" v-if="incident.resolved_at">
+                        <span class="detail-label">Resolved</span>
+                        <span class="detail-value">{{ formatDate(incident.resolved_at) }}</span>
+                    </div>
+
+                    <div class="detail-row" v-if="incident.service_id && service">
+                        <span class="detail-label">Service</span>
+                        <span class="detail-value">
+                            <Button
+                                :label="service.name"
+                                icon="pi pi-external-link"
+                                text
+                                severity="secondary"
+                                class="service-link-button"
+                                @click="openService(service.id)"
+                            />
+                        </span>
+                    </div>
+                </template>
+            </Card>
+
+            <!-- ACTIONS -->
+            <Card class="details-card">
+                <template #title>
+                    Incident Actions
+                </template>
+
+                <template #content>
+                    <div class="actions-panel">
+                        <div class="action-copy">
+                            <div class="action-title">Update Incident Status</div>
+                            <div class="action-subtitle">
+                                Mark this incident as acknowledged or resolved.
+                            </div>
+                        </div>
+
+                        <div class="action-buttons">
+                            <Button
+                                label="Acknowledge"
+                                icon="pi pi-clock"
+                                severity="secondary"
+                                outlined
+                                @click="acknowledgeIncident"
+                            />
+
+                            <Button
+                                label="Resolve Incident"
+                                icon="pi pi-check"
+                                :disabled="incident.status === 'resolved'"
+                                @click="openResolveDialog"
+                            />
+                        </div>
+                    </div>
+                </template>
+            </Card>
+
+            <!-- RESOLUTION NOTES -->
+            <Card
+                v-if="incident.status === 'resolved' && incident.resolution_notes"
+                class="details-card"
+            >
+                <template #title>
+                    Resolution Notes
+                </template>
+
+                <template #content>
+                    <div class="notes-content">
+                        {{ incident.resolution_notes }}
+                    </div>
+                </template>
+            </Card>
+        </div>
+    </div>
+
+    <!-- RESOLVE INCIDENT DIALOG -->
+    <Dialog
+        v-model:visible="resolveDialogVisible"
+        modal
+        header="Resolve Incident"
+        style="width: 500px"
+    >
+        <div class="dialog-form">
+            <label for="resolutionNotes">Resolution Notes</label>
+            <Textarea
+                id="resolutionNotes"
+                v-model="resolutionNotes"
+                rows="6"
+                autoResize
+                placeholder="Describe how the incident was resolved..."
+            />
+        </div>
+
+        <template #footer>
+            <Button
+                label="Cancel"
+                icon="pi pi-times"
+                severity="secondary"
+                @click="resolveDialogVisible = false"
+            />
+
+            <Button
+                label="Resolve"
+                icon="pi pi-check"
+                @click="resolveIncident"
+            />
+        </template>
+    </Dialog>
 </template>
 
 <script setup lang="ts">
+import { IncidentService, ServiceService } from '@/api'
+import { onMounted, reactive, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+
 import Card from 'primevue/card'
-import { onMounted, ref, reactive } from 'vue'
-import { useRoute } from 'vue-router'
-import { IncidentService } from '@/api'
-import { definePreset } from '@primevue/themes'
+import Button from 'primevue/button'
+import Message from 'primevue/message'
+import ProgressSpinner from 'primevue/progressspinner'
+import Dialog from 'primevue/dialog'
+import Textarea from 'primevue/textarea'
 import 'primeicons/primeicons.css'
 
-const state = reactive({
-    testMessage: null as string | null,
-    loading: false,
-    error: null as string | null,
-})
+import { useToastHelperService } from '@/services/toastHelperService'
 
-onMounted(() => {
-    console.log('AboutView mounted')
-    fetchTest()
-})
-
-interface IncidentsResponse {
-    incidents: Incident[]
-}
 interface Incident {
-    summary: string
     id: number
-    status: string
+    summary: string
     severity: string
+    status: string
     created_at: number
+    service_id: number
+    acknowledged_at: number | null
     resolved_at: number | null
+    resolution_notes: string | null
+    assigned_to: number | null
+    acknowledged_by: number | null
+    resolved_by: number | null
+}
+
+interface Service {
+    id: number
+    name: string
+    description: string
 }
 
 const route = useRoute()
-const incident = ref<Incident | null>(null)
+const router = useRouter()
+const toast = useToastHelperService()
 
-async function fetchTest() {
+const incident = ref<Incident | null>(null)
+const service = ref<Service | null>(null)
+
+const resolveDialogVisible = ref(false)
+const resolutionNotes = ref('')
+
+const state = reactive({
+    loading: false,
+    error: null as string | null
+})
+
+onMounted(() => {
+    fetchIncident()
+})
+
+async function fetchIncident() {
     state.loading = true
     state.error = null
 
     try {
-        console.log('Fetching incident with ID:', route.params.id)
-        const response = await IncidentService.getApiV1Incidents1(route.params.id as unknown as number)
+        const incidentId = Number(route.params.id)
 
-        if ('id' in response && response.id === parseInt(route.params.id as string)) {
-            console.log('Received incident:', response)
+        if (Number.isNaN(incidentId)) {
+            state.error = 'Invalid incident id.'
+            return
+        }
+
+        const response = await IncidentService.getApiV1Incidents1(incidentId)
+
+        if (response && 'id' in response) {
             incident.value = response as unknown as Incident
-        } else if ('message' in response) {
-            state.error = (response as any).message ?? 'There are no incidents'
+            resolutionNotes.value = incident.value.resolution_notes ?? ''
+
+            if (incident.value.service_id) {
+                await fetchService(incident.value.service_id)
+            }
+        } else if (response && 'message' in response) {
+            state.error = response.message ?? 'Failed to load incident.'
+        } else {
+            state.error = 'Incident not found.'
         }
     } catch (error: any) {
-        state.error = error?.message || 'An error occurred'
+        state.error = error?.message || 'An error occurred while loading the incident.'
     } finally {
         state.loading = false
     }
 }
 
-const formatter = new Intl.DateTimeFormat('en-US', {
-  dateStyle: 'medium',
-  timeStyle: 'short'
-});
+async function fetchService(serviceId: number) {
+    try {
+        const response = await ServiceService.getApiV1ServiceId(serviceId)
 
-function formatDate(ts: any) {
-  return formatter.format(new Date(ts));
+        if (response && 'id' in response) {
+            service.value = response as Service
+        }
+    } catch (error) {
+        console.error('Failed to load service:', error)
+    }
+}
+
+function openResolveDialog() {
+    if (!incident.value || incident.value.status === 'resolved') return
+    resolveDialogVisible.value = true
+}
+
+async function resolveIncident() {
+    if (!incident.value) return
+
+    try {
+        await IncidentService.postApiV1IncidentsResolve(incident.value.id, {
+            resolution_notes: resolutionNotes.value
+        })
+
+        toast.showSuccess('Incident resolved')
+        resolveDialogVisible.value = false
+        await fetchIncident()
+    } catch (error: any) {
+        toast.showError('Failed to resolve incident', error?.message)
+    }
+}
+
+function acknowledgeIncident() {
+    toast.showInfo('Not implemented yet', 'Acknowledge backend is not ready yet.')
+}
+
+function openService(serviceId: number) {
+    router.push(`/service/${serviceId}`)
+}
+
+function goBack() {
+    router.back()
 }
 
 function severityClass(severity: string) {
@@ -86,48 +322,228 @@ function severityClass(severity: string) {
             return 'severity-critical'
         default:
             return ''
-        }
+    }
+}
+
+function statusClass(status: string) {
+    switch (status?.toLowerCase()) {
+        case 'resolved':
+            return 'status-resolved'
+        case 'triggered':
+            return 'status-triggered'
+        case 'acknowledged':
+            return 'status-acknowledged'
+        default:
+            return ''
+    }
+}
+
+const formatter = new Intl.DateTimeFormat('en-US', {
+    dateStyle: 'medium',
+    timeStyle: 'short'
+})
+
+function formatDate(ts: any) {
+    if (!ts) return ''
+    return formatter.format(new Date(ts))
 }
 </script>
 
 <style scoped>
-.green {
-    color: green;
+.container {
+    max-width: 900px;
+    margin: auto;
+    padding: 8px 0 24px;
 }
-.red {
-    color: red;
+
+.loading {
+    display: flex;
+    justify-content: center;
+    padding: 40px;
 }
-.right {
-    float: right;
-    margin-left: auto;
+
+.incident-details {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
 }
-.row {
+
+.header-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.subtitle {
+    margin: 4px 0 0;
+    color: var(--p-text-muted-color);
+}
+
+.details-card {
+    border: 1px solid var(--p-content-border-color);
+    border-radius: 12px;
+    background: var(--p-content-background);
+    color: var(--p-text-color);
+    box-shadow: var(--p-card-shadow);
+}
+
+.details-card :deep(.p-card) {
+    background: var(--p-content-background);
+    color: var(--p-text-color);
+    border-radius: 12px;
+    box-shadow: none;
+}
+
+.details-card :deep(.p-card-title) {
+    color: var(--p-text-color);
+}
+
+.details-card :deep(.p-card-content) {
+    color: var(--p-text-color);
+}
+
+.detail-row {
     display: flex;
     justify-content: space-between;
+    gap: 20px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--p-content-border-color);
 }
-.icon {
-    margin-right: 10px;
+
+.detail-row:last-child {
+    border-bottom: none;
 }
-.incident-meta {
+
+.detail-label {
+    min-width: 140px;
+    font-weight: 600;
+    color: var(--p-text-muted-color);
+}
+
+.detail-value {
+    flex: 1;
+    text-align: right;
+    color: var(--p-text-color);
+    overflow-wrap: anywhere;
+}
+
+.actions-panel {
     display: flex;
+    align-items: center;
     justify-content: space-between;
-    font-size: 0.9em;
-    color: #555;
+    gap: 20px;
+    flex-wrap: wrap;
 }
+
+.action-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.action-title {
+    font-weight: 600;
+    color: var(--p-text-color);
+}
+
+.action-subtitle {
+    color: var(--p-text-muted-color);
+    font-size: 0.95rem;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.notes-content {
+    white-space: pre-wrap;
+    line-height: 1.6;
+    color: var(--p-text-color);
+}
+
+.dialog-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.dialog-form label {
+    font-weight: 600;
+    color: var(--p-text-color);
+}
+
+.service-link-button {
+    padding: 0;
+}
+
+/* pills */
+.severity-pill,
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.28rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: capitalize;
+    border: 1px solid currentColor;
+    white-space: nowrap;
+}
+
 .severity-critical {
-    color: #ff0000;
-    font-weight: bold;
+    color: var(--p-red-500, #ef4444);
 }
+
 .severity-high {
-    color: #e8670b;
-    font-weight: bold;
+    color: var(--p-orange-500, #f97316);
 }
+
 .severity-medium {
-    color: rgb(201, 211, 17);
-    font-weight: bold;
+    color: var(--p-yellow-500, #eab308);
 }
+
 .severity-low {
-    color: rgb(48, 222, 249);
-    font-weight: bold;
+    color: var(--p-blue-400, #38bdf8);
+}
+
+.status-resolved {
+    color: var(--p-green-500, #22c55e);
+}
+
+.status-triggered {
+    color: var(--p-red-500, #ef4444);
+}
+
+.status-acknowledged {
+    color: var(--p-orange-500, #f97316);
+}
+
+@media (max-width: 640px) {
+    .header-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .detail-row {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .detail-value {
+        text-align: left;
+    }
+
+    .actions-panel {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .action-buttons {
+        width: 100%;
+    }
 }
 </style>
