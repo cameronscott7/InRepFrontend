@@ -56,6 +56,11 @@ const items = computed(() => {
             command: () => router.push('/test')
         },
         {
+            label: 'Incidents',
+            icon: 'pi pi-info-circle',
+            command: () => router.push('/incidents')
+        },
+        {
             label: 'Services',
             icon: 'pi pi-info-circle',
             command: () => router.push('/services-page')
